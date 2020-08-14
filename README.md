@@ -28,7 +28,7 @@ INPUT: the data and, optionally, the name of a file in which to write the output
 OUTPUT: a 2D list of terms describing the importance of the selected features and the list of selected features' names
 
 *loadData(file)*<br/>
-INPUT: a filename
+INPUT: a filename<br/>
 OUTPUT: the data in an array
 
 
