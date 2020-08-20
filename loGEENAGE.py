@@ -20,7 +20,8 @@ from scipy.stats import chi2_contingency
 from sklearn import model_selection, svm, ensemble, feature_selection, linear_model, metrics,neural_network,tree
 from sklearn.feature_selection import mutual_info_classif,SelectKBest,chi2,f_regression
 from sklearn.naive_bayes import GaussianNB
-
+from LSL.MBs.CMB.CMB import CMB
+import pandas
 
 
 #Loads the data from a file
@@ -36,6 +37,58 @@ def loadData(f):
         row = row.split(";")
         data.append(list(row))
     return np.array(data)
+
+
+
+def loadTestGEENAGE():
+    data = list()
+    file = open("STAN_RNASeq_NormalizedCounts_65STADESeq2csv2_corrected.csv","r")
+    for line in file:
+        row = line.split("\n")[0]
+        row = row.split(";")
+        data.append(list(row))
+    data = np.array(data).transpose()
+    data = np.delete(data,0,0)
+    
+    
+    
+    classes = list()
+    file2 = open("STAN_RNAseq_MetaData_65STA_fullLORIA_Alex.csv","r")
+    for line in file2:
+        row = line.split("\n")[0]
+        row = np.array(row.split(";"))[[0,4]]
+        classes.append(list(row))
+    
+    
+    classes = np.array(classes)
+    data[0,0] = 'Class'
+    for j in range(data.shape[0]):
+        if data[j,0] == '"2H18"':
+                data[j,0] = 0
+        else:
+            for i in range(classes.shape[0]):
+                if data[j,0] == classes[i,0]:
+                    if classes[i,1] == '"cardiac"':
+                        data[j,0] = 1
+                    else:
+                       data[j,0] = 0 
+                       
+    print(data.shape)
+                       
+    
+    data_raw = data[1:,1:].astype(float)
+    data_classes = data[1:,0].astype(float)
+    
+    
+    #data_raw_new = SelectKBest(chi2, k = 1000).fit_transform(data_raw,data_classes)
+    
+    selector = SelectKBest(chi2, k = 1000)
+    selector.fit(data_raw,data_classes)
+    cols = selector.get_support(indices=True)
+    cols2 = [0]+[x+1 for x in cols]
+    data = data[:,cols2]
+    
+    return data
 
 
 #Selects features and reduces the dataset
@@ -262,7 +315,7 @@ Main functions
 
 
 #Identifies the features that are predictive and/or discriminant of the class feature
-def preDisc(data,file = None,depth = 1, n_perm = 50):
+def preDisc(data,file = None,depth = 1, n_perm = 200):
     start_time = time.time()
 
     knowledge = [[["Predictive_pos"],["Predictive"]],[["Predictive_neg"],["Predictive"]],[["Discriminant"],["Interesting"]],[["Predictive"],["Interesting"]]]
@@ -313,6 +366,32 @@ def preDisc(data,file = None,depth = 1, n_perm = 50):
     return Interp, list_features
 
     
+
+#Identifies the causes and effects of the class feature
+def causEffects(data,file = None, alpha = 0.1):
+    start_time = time.time()
+    
+    print("Data : ",data.shape[0]-1," objects and ",data.shape[1]-1," features")
+    
+    df = pandas.DataFrame(data=data[1:,:].astype(float),columns=data[0,:])
+    parents, children, undirected = CMB(df, 0, alpha, is_discrete=False)
+    
+    list_features = list(data[0,parents+children])
+    
+    Interp = []
+    for p in parents:
+        Interp.append(["Cause"])
+    for c in children:
+        Interp.append(["Effect"])
+    
+    if file != None:
+        interp2File(Interp, file, list_features)
+    
+    print("Done ! (",time.time()-start_time,"seconds )")
+    
+    return Interp, list_features
+
+
     
 #Writes the interpretation of selected features in a file
 def interp2File(Interp,f,l_f):
