@@ -2,7 +2,10 @@
 Python module for selecting important features in a supervised classification dataset and interpreting them in terms of prediction and discrimination.
 
 Functionalities:<br/>
--Identifies the features that are the most *predictive* and *discriminant* of a class
+-Identify the features that are the most *predictive* and *discriminant* of a class<br/>
+-Identify the features that are the *causes* and *effets* of a class
+
+This module uses pyCausalFS (https://github.com/wt-hu/pyCausalFS) for the computation of causes and effects.
 
 # LEGAL STUFF
 
@@ -23,9 +26,15 @@ Example:
 
 # USEFUL FUNCTIONS
 
-*preDisc(data,file = None,depth = 1, n_perm = 50)*<br/>
+*preDisc(data,file = None,depth = 1, n_perm = 200)*<br/>
 INPUT: the data and, optionally, the name of a file in which to write the output, a depth (more depth equals more features) and a number of permutations for the computation of features' importance<br/>
-OUTPUT: a 2D list of terms describing the importance of the selected features and the list of selected features' names
+OUTPUT: a 2D list of terms describing the importance of the selected features in terms of prediction and discrimination and the list of selected features' names
+
+
+*causEffects(data,file = None, alpha = 0.1)*<br/>
+INPUT: the data and, optionally, the name of a file in which to write the output and alpha, the p-alue threshold for conditional independence tests (higher alpha equals more features)<br/>
+OUTPUT: a 2D list of terms describing the importance of the selected features in terms of causes and effects and the list of selected features' names
+
 
 *loadData(file)*<br/>
 INPUT: a filename<br/>
